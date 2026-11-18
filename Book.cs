@@ -1,19 +1,17 @@
-﻿
-namespace LibraryManagementSystem
+﻿namespace LibraryManagementSystem
 {
-
     public class Book
     {
-        // title
-        public string Title { get; set; }
+        // Book properties
+        // private set means that properties can be changed only inside the class
 
-        // author
-        public string Author { get; set; }
+        public string Title { get; private set; }
 
-        // year
-        public int PublicationYear { get; set; }
+        public string Author { get; private set; }
 
-        // konstruqtori
+        public int PublicationYear { get; private set; }
+
+        // Constructor
         public Book(string title, string author, int publicationYear)
         {
             Title = title;
@@ -21,7 +19,17 @@ namespace LibraryManagementSystem
             PublicationYear = publicationYear;
         }
 
-        // informaciis chveneba 
+        // Update book information
+        public void UpdateBook(string title, string author, int year)
+        {
+            Title = title;
+            Author = author;
+            PublicationYear = year;
+        }
+
+        // Display book information
+        // virtual allows child classes to override this method
+
         public virtual void DisplayInfo()
         {
             Console.WriteLine($"Title: {Title}");

@@ -1,22 +1,33 @@
-﻿
-namespace LibraryManagementSystem
+﻿namespace LibraryManagementSystem
 {
+    // EBook inherits from Book class
     public class EBook : Book
     {
-        public double FileSize { get; set; }
+        // EBook additional property
+        public double FileSize { get; private set; }
 
-        // konstruqori
+        // Constructor
         public EBook(string title, string author, int publicationYear, double fileSize)
             : base(title, author, publicationYear)
         {
             FileSize = fileSize;
         }
 
-        // metodis dafarva
+        // Update EBook file size
+        public void UpdateFileSize(double fileSize)
+        {
+            FileSize = fileSize;
+        }
+
+        // Override DisplayInfo method
+        // This is an example of polymorphism
+
         public override void DisplayInfo()
         {
             base.DisplayInfo();
+
             Console.WriteLine($"File Size: {FileSize} MB");
+            Console.WriteLine("Type: EBook");
         }
     }
 }

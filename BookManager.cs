@@ -1,62 +1,102 @@
 ﻿namespace LibraryManagementSystem
 {
-
     public class BookManager
     {
-        // list
+        // List for storing books
         private List<Book> books = new List<Book>();
 
-        // add new book
-
+        // Add new book
         public void AddBook(Book book)
         {
+            // Check title
             if (string.IsNullOrWhiteSpace(book.Title))
             {
                 Console.WriteLine("Title cannot be empty");
                 return;
             }
 
+            // Check author
             if (string.IsNullOrWhiteSpace(book.Author))
             {
                 Console.WriteLine("Author cannot be empty");
                 return;
             }
 
-            if (book.PublicationYear <= 0 || book.PublicationYear > DateTime.Now.Year)
+            // Check publication year
+            if (book.PublicationYear <= 0 ||
+                book.PublicationYear > DateTime.Now.Year)
             {
                 Console.WriteLine("Invalid publication year");
                 return;
             }
 
+            // Check EBook file size
+            if (book is EBook ebook && ebook.FileSize <= 0)
+            {
+                Console.WriteLine("Invalid file size");
+                return;
+            }
+
+            // Check duplicate books
+            foreach (Book existingBook in books)
+            {
+                if (existingBook.Title.Equals(
+                    book.Title,
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine("This book already exists");
+                    return;
+                }
+            }
+
+            // Add book to list
             books.Add(book);
+
+            // Save changes
+            SaveBooks();
+
             Console.WriteLine("Book added successfully");
         }
 
-
-        // show all bbook
+        // Show all books
         public void ShowAllBooks()
         {
             if (books.Count == 0)
             {
-                Console.WriteLine("araa wignebi");
+                Console.WriteLine("There are no books");
                 return;
             }
 
+            Console.WriteLine("\n==== ALL BOOKS ====");
+
             foreach (Book book in books)
             {
+                // Polymorphism works here
                 book.DisplayInfo();
+
                 Console.WriteLine("----------------");
             }
+
+            Console.WriteLine($"Total books: {books.Count}");
         }
 
-        // mozebbna
+        // Search book by title
         public void SearchBook(string title)
         {
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                Console.WriteLine("Search title cannot be empty");
+                return;
+            }
+
             bool found = false;
 
             foreach (Book book in books)
             {
-                if (book.Title.ToLower() == title.ToLower())
+                // Search by full title or part of title
+                if (book.Title.Contains(
+                    title,
+                    StringComparison.OrdinalIgnoreCase))
                 {
                     book.DisplayInfo();
                     found = true;
@@ -65,19 +105,26 @@
 
             if (!found)
             {
-                Console.WriteLine("Ver ipova");
+                Console.WriteLine("Book not found");
             }
         }
 
-
-        // წიგნის წაშლა სათაურის მიხედვით
+        // Delete book by title
         public void DeleteBook(string title)
         {
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                Console.WriteLine("Title cannot be empty");
+                return;
+            }
+
             Book bookToDelete = null;
 
             foreach (Book book in books)
             {
-                if (book.Title.ToLower() == title.ToLower())
+                if (book.Title.Equals(
+                    title,
+                    StringComparison.OrdinalIgnoreCase))
                 {
                     bookToDelete = book;
                     break;
@@ -87,102 +134,228 @@
             if (bookToDelete != null)
             {
                 books.Remove(bookToDelete);
+
+                // Save changes
+                SaveBooks();
+
                 Console.WriteLine("Book deleted successfully!");
             }
             else
             {
-                Console.WriteLine("Book not found.");
+                Console.WriteLine("Book not found");
             }
         }
 
-        // redaqtireba
+        // Edit book information
         public void EditBook(string title)
         {
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                Console.WriteLine("Title cannot be empty");
+                return;
+            }
+
             Book bookToEdit = null;
 
+            // Find book
             foreach (Book book in books)
             {
-                if (book.Title.ToLower() == title.ToLower())
+                if (book.Title.Equals(
+                    title,
+                    StringComparison.OrdinalIgnoreCase))
                 {
                     bookToEdit = book;
                     break;
                 }
             }
 
-            if (bookToEdit != null)
+            if (bookToEdit == null)
             {
-                Console.Write("enter new title: ");
-                bookToEdit.Title = Console.ReadLine();
+                Console.WriteLine("Book not found");
+                return;
+            }
 
-                Console.Write("enter new author: ");
-                bookToEdit.Author = Console.ReadLine();
+            // Enter new information
+            Console.Write("Enter new title: ");
+            string newTitle = Console.ReadLine() ?? "";
 
-                Console.Write("enter new publication year: ");
+            Console.Write("Enter new author: ");
+            string newAuthor = Console.ReadLine() ?? "";
 
-                int year;
+            Console.Write("Enter new publication year: ");
+            int newYear;
 
-                if (int.TryParse(Console.ReadLine(), out year))
+            if (!int.TryParse(Console.ReadLine(), out newYear))
+            {
+                Console.WriteLine("Invalid year");
+                return;
+            }
+
+            // Validate new information
+            if (string.IsNullOrWhiteSpace(newTitle))
+            {
+                Console.WriteLine("Title cannot be empty");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(newAuthor))
+            {
+                Console.WriteLine("Author cannot be empty");
+                return;
+            }
+
+            if (newYear <= 0 || newYear > DateTime.Now.Year)
+            {
+                Console.WriteLine("Invalid publication year");
+                return;
+            }
+
+            // Check duplicate title
+            foreach (Book book in books)
+            {
+                if (book != bookToEdit &&
+                    book.Title.Equals(
+                        newTitle,
+                        StringComparison.OrdinalIgnoreCase))
                 {
-                    bookToEdit.PublicationYear = year;
-                    Console.WriteLine("book updated successfully");
-                }
-                else
-                {
-                    Console.WriteLine("invalid year");
+                    Console.WriteLine("This book already exists");
+                    return;
                 }
             }
-            else
+
+            // Update EBook information
+            if (bookToEdit is EBook ebook)
             {
-                Console.WriteLine("book not found");
+                Console.Write("Enter new file size (MB): ");
+                double newFileSize;
+
+                if (!double.TryParse(
+                    Console.ReadLine(),
+                    out newFileSize) || newFileSize <= 0)
+                {
+                    Console.WriteLine("Invalid file size");
+                    return;
+                }
+
+                ebook.UpdateFileSize(newFileSize);
             }
+
+            // Update book information
+            bookToEdit.UpdateBook(newTitle, newAuthor, newYear);
+
+            // Save changes
+            SaveBooks();
+
+            Console.WriteLine("Book updated successfully");
         }
 
-        // save
+        // Save books to text file
         public void SaveBooks()
         {
-            using (StreamWriter writer = new StreamWriter("books.txt"))
+            try
             {
-                foreach (Book book in books)
+                using (StreamWriter writer = new StreamWriter("books.txt"))
                 {
-                    writer.WriteLine($"{book.Title}|{book.Author}|{book.PublicationYear}");
-                }
-            }
-
-            Console.WriteLine("Books saved successfully!");
-        }
-
-        // load from file
-        public void LoadBooks()
-        {
-            if (File.Exists("books.txt"))
-            {
-                string[] lines = File.ReadAllLines("books.txt");
-
-                foreach (string line in lines)
-                {
-                    string[] data = line.Split('|');
-
-                    if (data.Length == 3 &&
-                        int.TryParse(data[2], out int year))
+                    foreach (Book book in books)
                     {
-                        Book book = new Book(data[0], data[1], year);
-                        books.Add(book);
+                        if (book is EBook ebook)
+                        {
+                            // Save EBook data
+                            writer.WriteLine(
+                                $"E|{ebook.Title}|{ebook.Author}|{ebook.PublicationYear}|{ebook.FileSize}"
+                            );
+                        }
+                        else
+                        {
+                            // Save normal book data
+                            writer.WriteLine(
+                                $"B|{book.Title}|{book.Author}|{book.PublicationYear}"
+                            );
+                        }
                     }
                 }
+
+                Console.WriteLine("Books saved successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error saving books: " + ex.Message);
             }
         }
 
-        // sataurebis masivi
+        // Load books from text file
+        public void LoadBooks()
+        {
+            try
+            {
+                if (File.Exists("books.txt"))
+                {
+                    string[] lines = File.ReadAllLines("books.txt");
+
+                    foreach (string line in lines)
+                    {
+                        string[] data = line.Split('|');
+
+                        // Load normal book
+                        if (data.Length == 4 && data[0] == "B")
+                        {
+                            if (int.TryParse(data[3], out int year))
+                            {
+                                Book book = new Book(
+                                    data[1],
+                                    data[2],
+                                    year
+                                );
+
+                                books.Add(book);
+                            }
+                        }
+
+                        // Load EBook
+                        else if (data.Length == 5 && data[0] == "E")
+                        {
+                            if (int.TryParse(data[3], out int year) &&
+                                double.TryParse(data[4], out double fileSize))
+                            {
+                                EBook ebook = new EBook(
+                                    data[1],
+                                    data[2],
+                                    year,
+                                    fileSize
+                                );
+
+                                books.Add(ebook);
+                            }
+                        }
+                    }
+
+                    Console.WriteLine("Books loaded successfully!");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error loading books: " + ex.Message);
+            }
+        }
+
+        // Show book titles using array
         public void ShowBookTitlesArray()
         {
+            if (books.Count == 0)
+            {
+                Console.WriteLine("There are no books");
+                return;
+            }
+
             string[] bookTitles = new string[books.Count];
 
+            // Copy titles to array
             for (int i = 0; i < books.Count; i++)
             {
                 bookTitles[i] = books[i].Title;
             }
 
-            Console.WriteLine("Book titles:");
+            Console.WriteLine("\n==== BOOK TITLES ====");
 
             foreach (string title in bookTitles)
             {
@@ -190,8 +363,32 @@
             }
         }
 
+        // Delete books text file
+        public void DeleteFile()
+        {
+            try
+            {
+                if (File.Exists("books.txt"))
+                {
+                    File.Delete("books.txt");
 
+                    // Clear books list
+                    books.Clear();
 
+                    Console.WriteLine("File deleted successfully!");
+                }
+                else
+                {
+                    books.Clear();
+
+                    Console.WriteLine("File does not exist");
+                    Console.WriteLine("Books list cleared");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error deleting file: " + ex.Message);
+            }
+        }
     }
-
 }
